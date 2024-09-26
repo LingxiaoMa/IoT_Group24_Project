@@ -1,5 +1,8 @@
 import socket
 import threading
+from app.models import Message
+from datetime import datetime
+from app import app, db
 
 class TCPServer:
     def __init__(self, host='0.0.0.0', port=5010):
@@ -31,6 +34,12 @@ class TCPServer:
                     break
                 print(f"Received data: {data}")
                 # 在这里处理接收到的数据
+                with app.app_context():
+                    msg = Message()
+                    msg.content = data
+                    db.session.add(msg)
+                    db.session.commit()
+
             except Exception as e:
                 print(f"Error receiving data: {e}")
                 break
