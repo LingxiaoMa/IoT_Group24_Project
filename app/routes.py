@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from app.tcp_server import start_tcp_server, stop_tcp_server
+from app.esp32_client import send_message_to_esp32
 from app import db
 from app.models import Message
 
@@ -31,3 +32,19 @@ def clear_all():
     except Exception as e:
         db.session.rollback()  # 如果发生异常，回滚事务
         return jsonify({"error": str(e)}), 500
+
+
+@main.route('/')
+def index():
+    return jsonify({"message": "Flask server is running!"})
+
+# Route to send a message to the ESP32
+@main.route('/send_message/<string:message>', methods=['POST'])
+def send_message(message):
+    # Ensure that only "ON" and "OFF" messages are allowed
+    if message in ["ON", "OFF"]:
+        # Send the message to the ESP32
+        send_message_to_esp32(message)
+        return jsonify({"status": "success", "message": f"Message '{message}' sent to ESP32."}), 200
+    else:
+        return jsonify({"status": "error", "message": "Invalid message. Use 'ON' or 'OFF'."}), 400
