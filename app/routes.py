@@ -48,3 +48,23 @@ def send_message(message):
         return jsonify({"status": "success", "message": f"Message '{message}' sent to ESP32."}), 200
     else:
         return jsonify({"status": "error", "message": "Invalid message. Use 'ON' or 'OFF'."}), 400
+
+
+
+
+
+# backend route to get blink data
+@main.route('/get_blink_data', methods=['GET'])
+def get_blink_data():
+    try:
+        # Query all blink data
+        messages = Message.query.all()
+        data = [{"timestamp": message.timestamp.isoformat(), "blink_count": int(message.content)} for message in messages]
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# route to render chart page
+@main.route('/blink_chart', methods=['GET'])
+def blink_chart():
+    return render_template('chart.html')
