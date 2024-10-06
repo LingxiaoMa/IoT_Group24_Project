@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Welcome, {{ user_name }}!</h1>
+    <p>Current data fetch interval: <span id="interval">{{ time_interval }}</span> seconds</p>
+
+    <!-- Form to modify interval -->
+    <form id="intervalForm">
+        <label for="intervalInput">Update interval (seconds):</label>
+        <input type="number" id="intervalInput" name="interval" min="1" value="{{ time_interval }}">
+        <button type="submit">Update</button>
+    </form>
+
+    <!-- Chart container -->
+    <canvas id="myChart" width="400" height="200"></canvas>
+
+    <script>
+        const intervalDisplay = document.getElementById('interval');
+        const intervalForm = document.getElementById('intervalForm');
+        let interval = {{ time_interval }};
+        let chart;
+
+        // Fetch and update the chart with data
+        function fetchData() {
+            fetch('/get_data')
+                .then(response => response.json())
+                .then(data => {
+                    updateChart(data);
+                });
+        }
+
+        // Initialize the chart
+        function updateChart(data) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if (!chart) {
+                chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Sample Data',
+                            data: data.values,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                });
+            } else {
+                chart.data.labels = data.labels;
+                chart.data.datasets[0].data = data.values;
+                chart.update();
+            }
+        }
+
+        // Handle interval form submission
+        intervalForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const newInterval = document.getElementById('intervalInput').value;
+            fetch('/update_interval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ interval: newInterval })
+            })
+            .then(response => response.json())
+            .then(data => {
+                interval = data.interval;
+                intervalDisplay.textContent = interval;
+            });
+        });
+
+        // Auto-fetch data at the specified interval
+        setInterval(fetchData, interval * 1000);
+
+        // Initial fetch to populate the chart
+        fetchData();
+    </script>
+</body>
+</html>
