@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Signal</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Raspberry Pi Signal Control</h1>
+    <button id="send-signal">Send Signal to Raspberry Pi</button>
+
+    <script>
+        $('#send-signal').click(function() {
+            $.ajax({
+                url: '/send-signal',
+                type: 'POST',
+                success: function(response) {
+                    alert('Signal sent to Raspberry Pi!');
+                },
+                error: function(error) {
+                    alert('Error sending signal');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

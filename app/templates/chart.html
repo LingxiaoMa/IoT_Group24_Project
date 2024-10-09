@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Fatigue Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Driver Fatigue Analysis Over Time (30 Second Intervals)</h1>
+    <div style="width: 80%; margin: auto;">
+        <canvas id="contentChart"></canvas>
+    </div>
+
+    <script>
+        async function drawContentChart() {
+            try {
+                // 获取数据
+                const response = await fetch('/get_grouped_data');
+                const groupedData = await response.json();
+
+                // 提取时间戳和 True 的数量
+                const labels = groupedData.map(entry => entry.rounded_time);
+                const trueCounts = groupedData.map(entry => entry.content);
+
+                // 使用 Chart.js 绘制折线图
+                const ctx = document.getElementById('contentChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'True Count (Fatigue) Per 30 Seconds',
+                                data: trueCounts,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                fill: false,
+                                tension: 0.1  // 使线条稍微圆滑
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Fatigue Count'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching grouped data:', error);
+            }
+        }
+
+        // 调用函数绘制图表
+        drawContentChart();
+    </script>
+</body>
+</html>

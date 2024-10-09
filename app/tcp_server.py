@@ -44,10 +44,10 @@ class TCPServer:
                     
                     print(f"Stored into database data: {data}")
                     
-                    if data == "true":
+                    if data == "True":
                         print("Sent 'ON' to esp32")
                         send_message_to_esp32("ON")
-                    elif data == "false":
+                    elif data == "False":
                         send_message_to_esp32("OFF")
 
             except Exception as e:
