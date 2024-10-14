@@ -4,25 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Send Signal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h1>Raspberry Pi Signal Control</h1>
-    <button id="send-signal">Send Signal to Raspberry Pi</button>
+    <h1>Welcome, Josh!</h1>
+    <button id="send-signal">Send Signal</button>
+
+    <!-- Button to stop signal -->
+    <button id="stop-signal" style="display:none;">Stop Signal</button>
+
+    <!-- Button to go to the chart page -->
+    <button onclick="window.location.href='{{ url_for('main.get_chart_page') }}'">Go to Chart Page</button>
+
+    <h3>Contact Us</h3>
+    <form action="/submit-contact" method="POST">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required><br><br>
+    <label for="message">Message:</label>
+    <textarea id="message" name="message" required></textarea><br><br>
+    <button type="submit">Submit</button>
+    </form>
+
+
 
     <script>
         $('#send-signal').click(function() {
+
             $.ajax({
                 url: '/send-signal',
                 type: 'POST',
                 success: function(response) {
                     alert('Signal sent to Raspberry Pi!');
+                    $('#send-signal').hide();
+                    // Show stop signal button
+                    $('#stop-signal').show();
+
                 },
                 error: function(error) {
                     alert('Error sending signal');
                 }
             });
         });
+        $('#stop-signal').click(function() {
+            $.ajax({
+                url: '/stop-signal',
+                type: 'POST',
+                success: function(response) {
+                    alert('Stop signal sent to Raspberry Pi!');
+                    $('#stop-signal').hide();
+                    $('#send-signal').show();
+                },
+                error: function(error) {
+                    alert('Error sending stop signal');
+                }
+            });
+        });
+
+
     </script>
+
 </body>
 </html>

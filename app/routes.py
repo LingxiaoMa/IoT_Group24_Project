@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, render_template
-from app.tcp_server import start_tcp_server, stop_tcp_server
+from app.tcp_server import start_tcp_server, stop_tcp_server, monitor_thread
 from app.esp32_client import send_message_to_esp32
 from sqlalchemy import func
 import pandas as pd
@@ -7,30 +7,74 @@ from app import db
 from app.models import Message
 import socket
 from datetime import timedelta
+from flask_mail import Message as MailMessage
+from app import mail
+from app.mail import send_fatigue_alert
+from app.FatigueMonitorThread import FatigueMonitorThread
 
 main = Blueprint('main', __name__)
 
 @main.route('/',methods=['GET'])
 def index():
-    start_server()
     return render_template('index.html')
+
+@main.route('/test', methods=['GET'])
+def send_test_email():
+    try:
+        if not monitor_thread.is_alive():
+            monitor_thread.start()
+        return jsonify({"status": "success", "message": "Test email sent successfully!"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+# @main.route('/send-signal', methods=['POST'])
+# def send_signal():
+#     try:
+#         # Raspberry Pi 的 IP 和端口
+#         rasp_ip = '172.20.10.6' 
+#         rasp_port = 5011 
+
+#         # 创建 TCP 连接到 Raspberry Pi
+#         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+#             sock.connect((rasp_ip, rasp_port))
+#             message = "start_signal"
+#             sock.sendall(message.encode('utf-8'))
+#         print('button clicked')
+#         return jsonify({"message": "Signal sent to Raspberry Pi"}), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
 @main.route('/send-signal', methods=['POST'])
 def send_signal():
-    try:
-        # Raspberry Pi 的 IP 和端口
-        rasp_ip = '172.20.10.6' 
-        rasp_port = 5011 
+    start_server()
+    global monitor_thread
+    # 确保线程在每次启动前已停止或未运行
+    if not monitor_thread.is_alive():
+        monitor_thread = FatigueMonitorThread()  # 创建新的监控线程
+        monitor_thread.start()
+    return send_tcp_signal("start_signal", '172.20.10.6', 5011)
 
-        # 创建 TCP 连接到 Raspberry Pi
+@main.route('/stop-signal', methods=['POST'])
+def stop_signal():
+    stop_server()
+    global monitor_thread
+    if monitor_thread.is_alive():
+        monitor_thread.stop()  # 停止线程
+        monitor_thread.join()  # 等待线程完全停止
+    return send_tcp_signal("stop_signal", '172.20.10.6', 5011)
+
+def send_tcp_signal(message, ip, port):
+    try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((rasp_ip, rasp_port))
-            message = "start_signal"
+            sock.connect((ip, port))
             sock.sendall(message.encode('utf-8'))
-        print('button clicked')
-        return jsonify({"message": "Signal sent to Raspberry Pi"}), 200
+        print(f'Signal "{message}" sent to Raspberry Pi')
+        return jsonify({"message": f'Signal "{message}" sent to Raspberry Pi'}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
     
 
 @main.route('/start_tcp_server', methods=['GET'])
@@ -44,7 +88,7 @@ def start_server():
 @main.route('/stop_tcp_server', methods=['GET'])
 def stop_server():
     try:
-        stop_tcp_server()
+        # stop_tcp_server()
         return jsonify({"message": "TCP Server stopped successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
