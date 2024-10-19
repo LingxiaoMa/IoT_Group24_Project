@@ -80,7 +80,7 @@ void loop() {
       // Move the servo back and forth between 0° and 90°
       pos += increment;
 
-      if (pos >= 90 || pos <= 0) {
+      if (pos >= 120 || pos <= 0) {
         increment = -increment;  // Reverse direction
       }
 
